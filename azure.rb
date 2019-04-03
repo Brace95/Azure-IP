@@ -38,14 +38,13 @@ class Azure
     http = Net::HTTP.new @@Azure_url.host, @@Azure_url.port
     http.use_ssl = true
     # Make the request to Azure API for All subnets
-
-      res = http.request req
-      if res.code == "200" then
-        azure_json = JSON.parse res.body
-        loadZones azure_json
-      else
-        raise IOError, "Invaild response from Azure API: #{res.code} - #{res.body}"
-      end
+    res = http.request req
+    if res.code == "200" then
+      azure_json = JSON.parse res.body
+      loadZones azure_json
+    else
+      raise IOError, "Invaild response from Azure API: #{res.code} - #{res.body}"
+    end
   end
 
   def loadZones json

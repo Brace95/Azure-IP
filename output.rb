@@ -14,8 +14,6 @@ class Output
   end
 
   def writeOutput args
-    raise TypeError, "Hash expected" if !args.is_a? Hash
-    raise ArgumentError, "No arguments giving" if args.empty?
     @file = File.open @output_file, "w"
     if args["Added"].empty? && args["Removed"].empty? then
       @file << "No Changes"
@@ -35,10 +33,21 @@ class Output
   end
 
   def ciscoOutput content
+    @file << "conf t\n"
+    # Create a object for each new subnet
+    content["Added"].each do |add|
+      @file << "object network #{add.sub '/', "_"}\n"
+      @file << "\tsubnet #{toSubnet add}\n"
+      @file << "\texit\n"
+    end
+    # Create/Edit the g-azure-datacentre object
     @file << "object-group network g-azure-datacentre\n"
-    content["Removed"].each {|remove| @file << "no network-object #{toSubnet remove}\n"}
-    content["Added"].each {|add| @file << "network-object #{toSubnet add}\n"}
-    @file << "end\nwr\n"
+    # Remove subnet objects that have been removed
+    content["Removed"].each {|remove| @file << "\tno network-object #{toSubnet remove}\n"}
+    # Add subnet objects that have been added
+    content["Added"].each {|add| @file << "\tnetwork-object object #{add.sub '/', "_"}\n"}
+    # Exit config mode and write to flash
+    @file << "\texit\nexit\nwr\n"
   end
 
   def paloOutput content
